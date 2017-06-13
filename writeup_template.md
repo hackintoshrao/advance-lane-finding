@@ -49,6 +49,7 @@ The goals / steps of this project are the following:
 - Using these points calibrate the camera to obtain the camera matrix and distortion co-efficients.
 - Use this information to Undistort the images taken from the camera using the  `cv2.undistort` function.
 - `result/chess_board_corners` contains the images with corners of the chess board drawn.
+- [Here is the code](https://gist.github.com/hackintoshrao/5b40dd4a1ba814c7fb26569f50510e23) for calibrating the camera and       undistorting the image.
 - Below is the undistorted chess board image.
 ![Undistorted image][./result/test_undist.jpg]
 
@@ -59,13 +60,20 @@ The goals / steps of this project are the following:
 #### 1. Provide an example of a distortion-corrected image.
 
 To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
-![alt text][image2]
+![original image][./test_images/test1.jpg]
+![undistorted_image][./result/test1_undistort.jpg]
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
+- [Here is the code snippet](https://gist.github.com/hackintoshrao/db8e5438b3f41850f4a5a4131ac60acb) I've used to create binary thresholded image .
+- The challenge here was to get the right combination of thresholding values.
+- Have used gradx, grady, gradient magnitude, direction and saturation thresholding, the threshold values can be seen in the code snippet above.
+- Below are couple of examples containing the original image and screenshot of their thresholded binary image.
 
-I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
+![original image][./test_images/test5.jpg]
+![thresholded binary image][./result/test_5_binary.png]
 
-![alt text][image3]
+![original image][./test_images/test2.jpg]
+![thresholded binary image][./result/test_2_binary.png]
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
