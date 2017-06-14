@@ -42,12 +42,15 @@ def undistort_image(image):
     undist = cv2.undistort(img, mtx, dist, None, mtx)
     return undist
 
-
+# save undistorted chess board images.
+for idx, fname in enumerate(images):
 
 # Undistort a chess board image.
-undist_img = undistort_image('camera_cal/calibration1.jpg')
+    undist_img = undistort_image(fname)
 # save the undistorted image.
-cv2.imwrite('result/test_undist_1.jpg',undist_img)
+    write_name = 'board_undistort'+str(idx)+'.jpg'
+    cv2.imwrite('./result/chess_undistort/' + write_name, undist_img)
+
 
 ksize = 7 # Choose a larger odd number to smooth gradient measurements
 
@@ -152,19 +155,55 @@ def region_of_interest(img, vertices):
     masked_image = cv2.bitwise_and(img, mask)
     return masked_image
 
-undist_img = undistort_image('./test_images/test1.jpg')
+images = glob.glob('./test_images/test*.jpg')
+
+
+# undistort the test images and save them in /result/test_undist/.
+for idx, fname in enumerate(images):
+
+    undist_img = undistort_image(fname)
+    write_name = "test_" + str(idx+1) + "_undistort.jpg"
 # save the undistorted image.
-cv2.imwrite('./result/test1_undistort.jpg',undist_img)
+    cv2.imwrite('./result/test_undist/' + write_name,undist_img)
+
+top_left = [560, 470]
+top_right = [730, 470]
+bottom_right = [1080, 720]
+bottom_left = [200, 720]
+
+pts = np.array([bottom_left,bottom_right,top_right,top_left])
+pts = np.float32(pts.tolist())
 
 
-test_image = cv2.imread("./test_images/test6.jpg")
-combined_binary = pipeline(test_image)
+top_left_dst = [200,0]
+top_right_dst = [1100,0]
+bottom_right_dst = [1100,720]
+bottom_left_dst = [200,720]
 
-imshape = combined_binary.shape
-print(imshape)
-vertices = np.array([[(0 + 150,imshape[0]),(575, 430), (725, 430), (imshape[1]-100,imshape[0])]], dtype=np.int32)
-#masked_image = region_of_interest(combined_binary, vertices)
-masked_image = region_of_interest(combined_binary, vertices)
+test_src = pts
+test_dst = np.array([bottom_left_dst,bottom_right_dst,top_right_dst,top_left_dst])
+test_dst = np.float32(test_dst.tolist())
 
-plt.imshow(masked_image, cmap='gray')
-plt.show()
+for idx, fname in enumerate(images):
+    test_image = cv2.imread(fname)
+    combined_binary = pipeline(test_image)
+    # process the test images through the pipeline and save the binary images in /result/binary_images/.
+    imshape = combined_binary.shape
+
+    vertices = np.array([[(0 + 150,imshape[0]),(575, 430), (725, 430), (imshape[1]-100,imshape[0])]], dtype=np.int32)
+
+
+    write_name = "test_" + str(idx+1) + "_binary.jpg"
+    plt.imsave('./result/binary_images/' + write_name, combined_binary, cmap='gray')
+    #masked_image = region_of_interest(combined_binary, vertices)
+    masked_image = region_of_interest(combined_binary, vertices)
+
+    #Compute the perspective transform, M, given source and destination points:
+    #M = cv2.getPerspectiveTransform(src, dst)
+    test_M = cv2.getPerspectiveTransform(test_src, test_dst)
+
+    #Warp an image using the perspective transform, M:
+    test_warped = cv2.warpPerspective(masked_image, test_M, (imshape[1], imshape[0]), flags=cv2.INTER_LINEAR)
+    #warped = cv2.warpPerspective(combined_binary, M, (imshape[1], imshape[0]), flags=cv2.INTER_LINEAR)
+    write_name = "test_" + str(idx+1) + "_warped.jpg"
+    plt.imsave('./result/perspective_transform/'+write_name,test_warped, cmap='gray')

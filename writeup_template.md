@@ -50,61 +50,51 @@ The goals / steps of this project are the following:
 - Use this information to Undistort the images taken from the camera using the  `cv2.undistort` function.
 - `result/chess_board_corners` contains the images with corners of the chess board drawn.
 - [Here is the code](https://gist.github.com/hackintoshrao/5b40dd4a1ba814c7fb26569f50510e23) for calibrating the camera and       undistorting the image.
-- Below is the undistorted chess board image.
-![Undistorted image][./result/test_undist.jpg]
-
-!![Distorted original image][./camera_cal/calibration1.jpg]
+- The folder `result/chess_undistort` contains all the undistorted chess board images.
 
 ### Pipeline (single images)
 
 #### 1. Provide an example of a distortion-corrected image.
 
-To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
-![original image][./test_images/test1.jpg]
-![undistorted_image][./result/test1_undistort.jpg]
+- The folder `./result/test_undist/` contains undistorted test images.
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 - [Here is the code snippet](https://gist.github.com/hackintoshrao/db8e5438b3f41850f4a5a4131ac60acb) I've used to create binary thresholded image .
 - The challenge here was to get the right combination of thresholding values.
 - Have used gradx, grady, gradient magnitude, direction and saturation thresholding, the threshold values can be seen in the code snippet above.
 - [Here is the commit](https://github.com/hackintoshrao/advance-lane-finding/commit/88ebb21db5f377f82165453d782c3e83224f4035) corresponding to the pipeline addition.
-- Below are couple of examples containing the original image and screenshot of their thresholded binary image.
+- The folder `result/binary_images` contains the binary images of the test images.
 
-![original image][./test_images/test5.jpg]
-![thresholded binary image][./result/test_5_binary.png]
 
-![original image][./test_images/test2.jpg]
-![thresholded binary image][./result/test_2_binary.png]
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
-The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
+Chose hardcoded source and destination points to perform perspective transform of the image.
 
 ```python
-src = np.float32(
-    [[(img_size[0] / 2) - 55, img_size[1] / 2 + 100],
-    [((img_size[0] / 6) - 10), img_size[1]],
-    [(img_size[0] * 5 / 6) + 60, img_size[1]],
-    [(img_size[0] / 2 + 55), img_size[1] / 2 + 100]])
-dst = np.float32(
-    [[(img_size[0] / 4), 0],
-    [(img_size[0] / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), 0]])
+top_left_source = [560, 470]
+top_right_source = [730, 470]
+bottom_right_source = [1080, 720]
+bottom_left_source = [200, 720]
+
+source = np.array([bottom_left_source,bottom_right_source,top_right_source,top_left_source])
+source_points = np.float32(pts.tolist())
+
+
+top_left_dst = [200,0]
+top_right_dst = [1100,0]
+bottom_right_dst = [1100,720]
+bottom_left_dst = [200,720]
+
+
+destination = np.array([bottom_left_dst,bottom_right_dst,top_right_dst,top_left_dst])
+destination = np.float32(destination.tolist())
 ```
 
-This resulted in the following source and destination points:
 
-| Source        | Destination   |
-|:-------------:|:-------------:|
-| 585, 460      | 320, 0        |
-| 203, 720      | 320, 720      |
-| 1127, 720     | 960, 720      |
-| 695, 460      | 960, 0        |
+- I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
-I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
-
-![alt text][image4]
+- The warped images are saved in `result/perspective_transform`.
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
