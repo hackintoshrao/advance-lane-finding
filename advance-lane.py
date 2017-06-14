@@ -134,11 +134,37 @@ def pipeline(img):
     return combined
 
 
+def region_of_interest(img, vertices):
+    """
+    Applies an image mask.
+
+    Only keeps the region of the image defined by the polygon
+    formed from `vertices`. The rest of the image is set to black.
+    """
+    #defining a blank mask to start with
+    mask = np.zeros_like(img)
+    ignore_mask_color = 255
+
+    #filling pixels inside the polygon defined by "vertices" with the fill color
+    cv2.fillPoly(mask, vertices, ignore_mask_color)
+
+    #returning the image only where mask pixels are nonzero
+    masked_image = cv2.bitwise_and(img, mask)
+    return masked_image
 
 undist_img = undistort_image('./test_images/test1.jpg')
 # save the undistorted image.
 cv2.imwrite('./result/test1_undistort.jpg',undist_img)
 
 
-test_image = cv2.imread("./test_images/test5.jpg")
-pipeline(test_image)
+test_image = cv2.imread("./test_images/test6.jpg")
+combined_binary = pipeline(test_image)
+
+imshape = combined_binary.shape
+print(imshape)
+vertices = np.array([[(0 + 150,imshape[0]),(575, 430), (725, 430), (imshape[1]-100,imshape[0])]], dtype=np.int32)
+#masked_image = region_of_interest(combined_binary, vertices)
+masked_image = region_of_interest(combined_binary, vertices)
+
+plt.imshow(masked_image, cmap='gray')
+plt.show()

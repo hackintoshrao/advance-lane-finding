@@ -67,6 +67,7 @@ To demonstrate this step, I will describe how I apply the distortion correction 
 - [Here is the code snippet](https://gist.github.com/hackintoshrao/db8e5438b3f41850f4a5a4131ac60acb) I've used to create binary thresholded image .
 - The challenge here was to get the right combination of thresholding values.
 - Have used gradx, grady, gradient magnitude, direction and saturation thresholding, the threshold values can be seen in the code snippet above.
+- [Here is the commit](https://github.com/hackintoshrao/advance-lane-finding/commit/88ebb21db5f377f82165453d782c3e83224f4035) corresponding to the pipeline addition.
 - Below are couple of examples containing the original image and screenshot of their thresholded binary image.
 
 ![original image][./test_images/test5.jpg]
