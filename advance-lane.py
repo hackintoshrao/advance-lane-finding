@@ -211,6 +211,8 @@ for idx, fname in enumerate(images):
 
 """
 test_image = cv2.imread("./test_images/test5.jpg")
+# undistorted original image.
+undist_img = undistort_image('./test_images/test5.jpg')
 combined_binary = pipeline(test_image)
 # process the test images through the pipeline and save the binary images in /result/binary_images/.
 imshape = combined_binary.shape
@@ -224,6 +226,9 @@ masked_image = region_of_interest(combined_binary, vertices)
 #Compute the perspective transform, M, given source and destination points:
 #M = cv2.getPerspectiveTransform(src, dst)
 test_M = cv2.getPerspectiveTransform(test_src, test_dst)
+
+#Compute the inverse perspective transform:
+test_M_inverse = cv2.getPerspectiveTransform(test_dst, test_src)
 
 #Warp an image using the perspective transform, M:
 warped = cv2.warpPerspective(masked_image, test_M, (imshape[1], imshape[0]), flags=cv2.INTER_LINEAR)
@@ -340,6 +345,9 @@ right_curverad = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**
 # Now our radius of curvature is in meters
 print(left_curverad, 'm', right_curverad, 'm')
 
+# distance of car from center.
+# The distance from center is the difference in center of the warped
+# image and the actual center of the image from the camera.
 left_min = np.amin(leftx, axis=0)
 print('left_min', left_min)
 right_max = np.amax(rightx, axis=0)
@@ -353,3 +361,24 @@ distance_from_center = xm_per_pix * pixel_from_center
 print('meter dist from center', distance_from_center)
 
 meters_in_str = str(round(distance_from_center, 3))
+
+# Create an image to draw the lines on
+warp_zero = np.zeros_like(warped).astype(np.uint8)
+color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
+
+# Recast the x and y points into usable format for cv2.fillPoly()
+pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
+pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
+pts = np.hstack((pts_left, pts_right))
+
+# Draw the lane onto the warped blank image
+cv2.fillPoly(color_warp, np.int_([pts]), (0,255, 0))
+
+# Warp the blank back to original image space using inverse perspective matrix (Minv)
+newwarp = cv2.warpPerspective(color_warp, test_M_inverse, (undist_img.shape[1], undist_img.shape[0]))
+# Combine the result with the original image
+
+orig_img = np.copy(undist_img)
+result = cv2.addWeighted(orig_img, 1, newwarp, 0.3, 0)
+plt.imshow(result)
+plt.show()
