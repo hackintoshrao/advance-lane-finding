@@ -339,3 +339,17 @@ left_curverad = ((1 + (2*left_fit_cr[0]*y_eval*ym_per_pix + left_fit_cr[1])**2)*
 right_curverad = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2*right_fit_cr[0])
 # Now our radius of curvature is in meters
 print(left_curverad, 'm', right_curverad, 'm')
+
+left_min = np.amin(leftx, axis=0)
+print('left_min', left_min)
+right_max = np.amax(rightx, axis=0)
+print('right max', right_max)
+
+actual_center = (right_max + left_min)/2
+pixel_from_center =  actual_center - (1280/2)
+print('pix dist from center', pixel_from_center)
+
+distance_from_center = xm_per_pix * pixel_from_center
+print('meter dist from center', distance_from_center)
+
+meters_in_str = str(round(distance_from_center, 3))
