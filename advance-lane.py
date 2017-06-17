@@ -41,7 +41,7 @@ def undistort_image(image):
     # undistort the image using camera matrix and distortion co-efficients.
     undist = cv2.undistort(img, mtx, dist, None, mtx)
     return undist
-
+"""
 # save undistorted chess board images.
 for idx, fname in enumerate(images):
 
@@ -50,7 +50,7 @@ for idx, fname in enumerate(images):
 # save the undistorted image.
     write_name = 'board_undistort'+str(idx)+'.jpg'
     cv2.imwrite('./result/chess_undistort/' + write_name, undist_img)
-
+"""
 
 ksize = 7 # Choose a larger odd number to smooth gradient measurements
 
@@ -132,8 +132,7 @@ def pipeline(img):
 
     combined = np.zeros_like(dir_binary)
     combined[((gradx == 1) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1)) | (saturation_binary == 1)] = 1
-    plt.imshow(combined, cmap='gray')
-    plt.show()
+
     return combined
 
 
@@ -157,7 +156,7 @@ def region_of_interest(img, vertices):
 
 images = glob.glob('./test_images/test*.jpg')
 
-
+"""
 # undistort the test images and save them in /result/test_undist/.
 for idx, fname in enumerate(images):
 
@@ -165,6 +164,7 @@ for idx, fname in enumerate(images):
     write_name = "test_" + str(idx+1) + "_undistort.jpg"
 # save the undistorted image.
     cv2.imwrite('./result/test_undist/' + write_name,undist_img)
+"""
 
 top_left = [560, 470]
 top_right = [730, 470]
@@ -184,6 +184,7 @@ test_src = pts
 test_dst = np.array([bottom_left_dst,bottom_right_dst,top_right_dst,top_left_dst])
 test_dst = np.float32(test_dst.tolist())
 
+"""
 for idx, fname in enumerate(images):
     test_image = cv2.imread(fname)
     combined_binary = pipeline(test_image)
@@ -207,3 +208,119 @@ for idx, fname in enumerate(images):
     #warped = cv2.warpPerspective(combined_binary, M, (imshape[1], imshape[0]), flags=cv2.INTER_LINEAR)
     write_name = "test_" + str(idx+1) + "_warped.jpg"
     plt.imsave('./result/perspective_transform/'+write_name,test_warped, cmap='gray')
+
+"""
+test_image = cv2.imread("./test_images/test5.jpg")
+combined_binary = pipeline(test_image)
+# process the test images through the pipeline and save the binary images in /result/binary_images/.
+imshape = combined_binary.shape
+
+vertices = np.array([[(0 + 150,imshape[0]),(575, 430), (725, 430), (imshape[1]-100,imshape[0])]], dtype=np.int32)
+
+
+#masked_image = region_of_interest(combined_binary, vertices)
+masked_image = region_of_interest(combined_binary, vertices)
+
+#Compute the perspective transform, M, given source and destination points:
+#M = cv2.getPerspectiveTransform(src, dst)
+test_M = cv2.getPerspectiveTransform(test_src, test_dst)
+
+#Warp an image using the perspective transform, M:
+warped = cv2.warpPerspective(masked_image, test_M, (imshape[1], imshape[0]), flags=cv2.INTER_LINEAR)
+binary_warped = np.copy(warped)
+histogram = np.sum(binary_warped[binary_warped.shape[0]//2:,:], axis=0)
+
+plt.imshow(warped, cmap='gray')
+plt.show()
+
+midpoint = np.int(histogram.shape[0]/2)
+leftx_base = np.argmax(histogram[:midpoint])
+rightx_base = np.argmax(histogram[midpoint:]) + midpoint
+
+out_img = np.dstack((binary_warped, binary_warped, binary_warped))*255
+
+# Choose the number of sliding windows
+nwindows = 9
+# Set height of windows
+window_height = np.int(binary_warped.shape[0]/nwindows)
+# Identify the x and y positions of all nonzero pixels in the image
+nonzero = binary_warped.nonzero()
+nonzeroy = np.array(nonzero[0])
+nonzerox = np.array(nonzero[1])
+# Current positions to be updated for each window
+leftx_current = leftx_base
+rightx_current = rightx_base
+# Set the width of the windows +/- margin
+margin = 100
+# Set minimum number of pixels found to recenter window
+minpix = 50
+# Create empty lists to receive left and right lane pixel indices
+left_lane_inds = []
+right_lane_inds = []
+
+# Step through the windows one by one
+for window in range(nwindows):
+    # Identify window boundaries in x and y (and right and left)
+    win_y_low = binary_warped.shape[0] - (window+1)*window_height
+    win_y_high = binary_warped.shape[0] - window*window_height
+    win_xleft_low = leftx_current - margin
+    win_xleft_high = leftx_current + margin
+    win_xright_low = rightx_current - margin
+    win_xright_high = rightx_current + margin
+    # Draw the windows on the visualization image
+    cv2.rectangle(out_img,(win_xleft_low,win_y_low),(win_xleft_high,win_y_high),(0,255,0), 2)
+    cv2.rectangle(out_img,(win_xright_low,win_y_low),(win_xright_high,win_y_high),(0,255,0), 2)
+    # Identify the nonzero pixels in x and y within the window
+    good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xleft_low) & (nonzerox < win_xleft_high)).nonzero()[0]
+    good_right_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xright_low) & (nonzerox < win_xright_high)).nonzero()[0]
+    # Append these indices to the lists
+    left_lane_inds.append(good_left_inds)
+    right_lane_inds.append(good_right_inds)
+    # If you found > minpix pixels, recenter next window on their mean position
+    if len(good_left_inds) > minpix:
+        leftx_current = np.int(np.mean(nonzerox[good_left_inds]))
+    if len(good_right_inds) > minpix:
+        rightx_current = np.int(np.mean(nonzerox[good_right_inds]))
+
+# Concatenate the arrays of indices
+left_lane_inds = np.concatenate(left_lane_inds)
+right_lane_inds = np.concatenate(right_lane_inds)
+
+# Extract left and right line pixel positions
+leftx = nonzerox[left_lane_inds]
+lefty = nonzeroy[left_lane_inds]
+rightx = nonzerox[right_lane_inds]
+righty = nonzeroy[right_lane_inds]
+
+# Fit a second order polynomial to each
+left_fit = np.polyfit(lefty, leftx, 2)  #use 28816 points !
+right_fit = np.polyfit(righty, rightx, 2)  #use 5929 points !
+
+
+ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
+#print(ploty) # 0 - 719
+
+left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+
+ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
+#print(ploty) # 0 - 719
+
+left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+
+# Generate x and y values for plotting
+
+out_img = np.dstack((binary_warped, binary_warped, binary_warped))*255
+window_img = np.zeros_like(out_img)
+
+out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
+out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
+plt.imshow(out_img)
+plt.plot(left_fitx, ploty, color='yellow')
+plt.plot(right_fitx, ploty, color='red')
+plt.xlim(0, 1280)
+plt.ylim(720, 0)
+plt.show()
+print(leftx_base)
+print(rightx_base)
