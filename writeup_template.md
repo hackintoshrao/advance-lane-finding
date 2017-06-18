@@ -99,19 +99,77 @@ destination = np.float32(destination.tolist())
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
-
-![alt text][image5]
+- Identified the starting x coordinates for lane line scanning by using histogram peaks for both side of the lanes.
+- Using sliding window for continuous y coordinates, the peak points around a margin are found.
+- `np.polyfit` is used to fit a polynomial to the identified points.
+- x coordinate points are identified using coefficients of the polynomial found.
+- The folder `./result/polyfit` contains images of the polynomial fit.
+-
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines # through # in my code in `my_other_file.py`
+- Conversion from pixels to meters is done using the following scale
+```
+  ym_per_pix = 30/720 # meters per pixel in y dimension
+  xm_per_pix = 3.7/700
+```
+- New polynomial is fit using measurements in meters.
+
+```
+# Fit new polynomials to x,y in world space
+  A = np.polyfit(lefty*ym_per_pix, leftx*xm_per_pix, 2)
+  right_fit_cr = np.polyfit(righty*ym_per_pix, rightx*xm_per_pix, 2)
+```
+
+- Once the coefficients (A, B) of the polynomial fit is obtained the radius of curvature is calculated using the following formula
+
+  ```
+  left_curverad = ((1 + (2 * A *y_eval * ym_per_pix + B)**2)**1.5) / np.absolute(2 * A)
+  right_curverad = ((1 + (2 * A * y_eval * ym_per_pix + B)**2)**1.5) / np.absolute( 2 * A)
+  ```
+- The distance from center is the difference between center of width of the warped image and the actual center of the width of the image from the camera.
+
+- Here is the code snippet used to find the position of the car w.r.t center of the road.
+
+  ```
+  center_of_warped = (right_max + left_min)/2
+  actual_center = (1280/2)
+  pixel_from_center =  center_of_warped - actual_center
+  print('pix dist from center', pixel_from_center)
+
+  distance_from_center = xm_per_pix * pixel_from_center
+  print('meter dist from center', distance_from_center)
+  ```  
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
+- Use `cv2.fillPoly` to fill the detected lane with green. Use left and right x-coordinates obtained from the polynomial fit to draw the lane line.
+- Then use inverse perspective transform for draw the lane back onto the original image.
+- Here is the code snippet I've used to plot back the detected lane onto the original image.
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+```
+# Create an image to draw the lines on
+  warp_zero = np.zeros_like(warped).astype(np.uint8)
+  color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
 
-![alt text][image6]
+  # Recast the x and y points into usable format for cv2.fillPoly()
+  pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
+  pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
+  pts = np.hstack((pts_left, pts_right))
+
+  # Draw the lane onto the warped blank image
+  cv2.fillPoly(color_warp, np.int_([pts]), (0,255, 0))
+
+  # Warp the blank back to original image space using inverse perspective matrix (Minv)
+  newwarp = cv2.warpPerspective(color_warp, test_M_inverse, (undist_img.shape[1], undist_img.shape[0]))
+  # Combine the result with the original image
+
+  orig_img = np.copy(undist_img)
+  result = cv2.addWeighted(orig_img, 1, newwarp, 0.3, 0)
+
+```
+
+- The final results are saved in `./result/final_result/` folder.
+
 
 ---
 
