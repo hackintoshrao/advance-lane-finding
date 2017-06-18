@@ -104,7 +104,7 @@ destination = np.float32(destination.tolist())
 - `np.polyfit` is used to fit a polynomial to the identified points.
 - x coordinate points are identified using coefficients of the polynomial found.
 - The folder `./result/polyfit` contains images of the polynomial fit.
--
+- [Here is the link](https://gist.github.com/hackintoshrao/fd17a36ef7415fa942db2ac5262c81d4) for the code snippet used to achieve the polynomial fit.
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
@@ -177,7 +177,9 @@ destination = np.float32(destination.tolist())
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](https://youtu.be/wIEf9NGbglI)
+
+The video is also saved in `./result/video/result.mp4`
 
 ---
 
@@ -185,4 +187,10 @@ Here's a [link to my video result](./project_video.mp4)
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+- The first challenge was to get the right combination of threshold values for obtaining the binary image. Had to experiment a lot
+  around this and this consumed lot of time.
+- The next issue was related to choosing parameters for doing sanity check on the polynomial fit, it took a while to choose the
+  right parameter to perform the sanity check.
+- The last challenge I was faced to get the moving average of the polynomial fits, choosing deque for data structure made the job  easy.
+- We have made assumption that the road is flat, but under conditions where the road is not flat the pipeline would fail. To overcome this one needs to account for the change in flatness of the road before performing perspective transform.
+- Since we have adjusted the threshold parameters for the conditions in the test image, the pipeline would fail under drastic lighting conditions. Probably automatic adjusting of the threshold and channel paramters, making it more dynamic could help detect lines in varying drastic environments.
